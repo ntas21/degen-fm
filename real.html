@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEGEN FM REAL LIVE</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:#020617;
+  color:white;
+  font-family:Arial, sans-serif;
+  padding:80px 16px 40px;
+}
+.topbar{
+  position:fixed;top:0;left:0;width:100%;
+  height:52px;background:#030712;
+  border-bottom:1px solid #00f7ff;
+  display:flex;align-items:center;z-index:99;
+}
+.live{
+  background:#00f7ff;color:#001014;
+  height:100%;display:flex;align-items:center;
+  padding:0 18px;font-weight:900;
+}
+.ticker{
+  white-space:nowrap;overflow:hidden;
+  color:#00ff88;font-size:14px;padding-left:15px;
+}
+.hero{text-align:center;margin:40px auto;max-width:900px}
+h1{
+  font-size:48px;
+  background:linear-gradient(90deg,#00f7ff,#ff00aa);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.hero p{color:#8aa4b8;margin-top:12px}
+.btns{margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{
+  padding:14px 20px;border-radius:12px;text-decoration:none;
+  font-weight:800;border:1px solid #00f7ff;color:#00f7ff;
+}
+.btn.primary{background:#00f7ff;color:#001014}
+.grid{
+  max-width:1200px;margin:auto;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:18px;
+}
+.card{
+  background:linear-gradient(180deg,#071525,#03070d);
+  border:1px solid #00f7ff44;
+  border-radius:18px;padding:18px;
+  box-shadow:0 0 25px #00f7ff1f;
+}
+.symbol{font-size:26px;font-weight:900;margin-bottom:8px}
+.name{color:#8aa4b8;font-size:13px;margin-bottom:14px}
+.price{font-size:24px;color:#00f7ff;margin-bottom:10px}
+.green{color:#00ff88}
+.red{color:#ff3b6b}
+.row{display:flex;justify-content:space-between;margin-top:8px;color:#b8d4e4;font-size:14px}
+.badge{
+  display:inline-block;margin-top:14px;padding:7px 10px;
+  border-radius:8px;font-size:12px;font-weight:900;
+}
+.hot{background:#00ff8840;color:#00ff88}
+.risky{background:#ff3b6b40;color:#ff3b6b}
+.neutral{background:#00f7ff33;color:#00f7ff}
+.footer{text-align:center;color:#607080;margin-top:40px;font-size:12px}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+  <div class="live">● REAL LIVE</div>
+  <div class="ticker" id="ticker">Loading real DexScreener data...</div>
+</div>
+
+<section class="hero">
+  <h1>DEGEN FM REAL TERMINAL</h1>
+  <p>Real live crypto market feed powered by DexScreener public data.</p>
+  <div class="btns">
+    <a class="btn primary" href="radio.html">▶ LISTEN RADIO</a>
+    <a class="btn" href="index.html">MAIN PORTAL</a>
+  </div>
+</section>
+
+<div class="grid" id="cards">
+  <div class="card">Loading live market data...</div>
+</div>
+
+<div class="footer">
+  DEGEN FM © 2026 — Real market data display. Not financial advice.
+</div>
+
+<script>
+const watchlist = ["WIF","BONK","POPCAT","PEPE","DOGE","SHIB","TRUMP","SOL"];
+
+async function fetchToken(q){
+  const res = await fetch("https://api.dexscreener.com/latest/dex/search?q=" + q);
+  const data = await res.json();
+
+  if(!data.pairs || !data.pairs.length) return null;
+
+  return data.pairs
+    .filter(p => p.chainId === "solana" || p.chainId === "ethereum" || p.chainId === "bsc")
+    .sort((a,b)=>(b.volume?.h24 || 0) - (a.volume?.h24 || 0))[0];
+}
+
+async function load(){
+  const cards = document.getElementById("cards");
+  const ticker = document.getElementById("ticker");
+
+  try{
+    const results = [];
+    for(const token of watchlist){
+      const p = await fetchToken(token);
+      if(p) results.push(p);
+    }
+
+    let html = "";
+    let tick = "";
+
+    results.forEach(p=>{
+      const symbol = p.baseToken?.symbol || "UNKNOWN";
+      const name = p.baseToken?.name || "";
+      const price = p.priceUsd ? Number(p.priceUsd).toFixed(8) : "N/A";
+      const change = Number(p.priceChange?.h24 || 0);
+      const vol = Math.round(p.volume?.h24 || 0).toLocaleString();
+      const liq = Math.round(p.liquidity?.usd || 0).toLocaleString();
+      const mcap = Math.round(p.marketCap || p.fdv || 0).toLocaleString();
+
+      const changeClass = change >= 0 ? "green" : "red";
+      const badgeClass = change > 10 ? "hot" : change < -10 ? "risky" : "neutral";
+      const badgeText = change > 10 ? "HOT" : change < -10 ? "RISKY" : "LIVE";
+
+      html += `
+      <div class="card">
+        <div class="symbol">${symbol}</div>
+        <div class="name">${name}</div>
+        <div class="price">$${price}</div>
+        <div class="${changeClass}">${change.toFixed(2)}% / 24h</div>
+        <div class="row"><span>Volume</span><b>$${vol}</b></div>
+        <div class="row"><span>Liquidity</span><b>$${liq}</b></div>
+        <div class="row"><span>MCAP/FDV</span><b>$${mcap}</b></div>
+        <div class="row"><span>DEX</span><b>${p.dexId || "-"}</b></div>
+        <span class="badge ${badgeClass}">${badgeText}</span>
+      </div>`;
+
+      tick += `${symbol}: $${price} (${change.toFixed(2)}%) | VOL $${vol} /// `;
+    });
+
+    cards.innerHTML = html || "<div class='card'>No data found.</div>";
+    ticker.innerText = tick || "No live data found.";
+
+  }catch(e){
+    cards.innerHTML = "<div class='card'>API error. Refresh later.</div>";
+    ticker.innerText = "DexScreener API error.";
+  }
+}
+
+load();
+setInterval(load,30000);
+</script>
+
+</body>
+</html>
