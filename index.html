@@ -2229,14 +2229,23 @@ function init() {
 
 document.addEventListener('DOMContentLoaded', init);
 
-async function fetchRealPrices() {
+async async function fetchRealPrices() {
   try {
-    const res = await fetch('https://api.dexscreener.com/latest/dex/tokens/EKpzg6wBJAYv99rES9w525ax1Km6eh78vAnZu3mhcYOM');
+    // POPCAT için gerçek DexScreener API bağlantısı
+    const res = await fetch('https://api.dexscreener.com/latest/dex/tokens/7GCihmAZ8wBs92s8KwtC9BRX6696VNGrCca896Ccpump');
     const data = await res.json();
     if (data.pairs && data.pairs.length > 0) {
       const price = parseFloat(data.pairs[0].priceUsd || 0);
-      if (typeof TOKENS !== 'undefined' && TOKENS[0]) {
-        TOKENS[0].price = price;
+      
+      // Sitenizdeki POPCAT hangi sıradaysa onu güncelliyoruz (Genelde 1. sırada yani TOKENS[1])
+      if (typeof TOKENS !== 'undefined') {
+        // Hem listedeki WIF/POPCAT durumuna göre garantiye alıyoruz:
+        if(TOKENS[1]) TOKENS[1].price = price;
+        // Eğer tek kart olarak POPCAT tasarladıysanız ana fiyatı da güncellesin:
+        const priceEl = document.querySelector('.token-price');
+        if(priceEl && !priceEl.textContent.includes('WIF')) {
+           priceEl.textContent = '$' + price.toFixed(5);
+        }
         if (typeof buildTokenGrid === 'function') buildTokenGrid();
       }
     }
@@ -2244,6 +2253,7 @@ async function fetchRealPrices() {
     console.log("Gerçek veri alınamadı:", e);
   }
 }
+
 </script>
 </body>
 </html>
