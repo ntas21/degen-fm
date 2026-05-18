@@ -2222,12 +2222,32 @@ function init() {
   // timers
   setInterval(addWhaleAlert, 7000);
   setInterval(addActivity, 5500);
-  setInterval(fakeUpdatePrices, 4000);
+  setIsetInvertal(fetchRealPrices, 4000);
+
   setInterval(updateListeners, 6000);
   setInterval(cycleMood, 15000);
 }
 
 document.addEventListener('DOMContentLoaded', init);
-</script>
+</script>async function fetchRealPrices() {
+  try {
+    // DexScreener API'den WIF token'ın gerçek fiyatını çekiyoruz
+    const res = await fetch('https://api.dexscreener.com/latest/dex/tokens/EKpzg6wBJAYv99rES9w525ax1Km6eh78vAnZu3mhcYOM');
+    const data = await res.json();
+    if (data.pairs && data.pairs.length > 0) {
+      const price = parseFloat(data.pairs[0].priceUsd || 0);
+      
+      // Kodunuzun içindeki fiyat listesini gerçek fiyatla güncelliyoruz
+      if (typeof TOKENS !== 'undefined' && TOKENS[0]) {
+        TOKENS[0].price = price; 
+        // Eğer arayüzü güncelleyen fonksiyonunuz varsa yeniliyoruz
+        if (typeof buildTokenGrid === 'function') buildTokenGrid();
+      }
+    }
+  } catch (e) {
+    console.log("Gerçek veri alınamadı:", e);
+  }
+}
+
 </body>
 </html>
