@@ -2223,7 +2223,30 @@ function init() {
   setInterval(addWhaleAlert, 7000);
   setInterval(addActivity, 5500);
   setInterval(fetchRealPrices, 4000);
-;
+  setInterval(updateListeners, 6000);
+  setInterval(cycleMood, 15000);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+async function fetchRealPrices() {
+  try {
+    const res = await fetch('https://api.dexscreener.com/latest/dex/tokens/EKpzg6wBJAYv99rES9w525ax1Km6eh78vAnZu3mhcYOM');
+    const data = await res.json();
+    if (data.pairs && data.pairs.length > 0) {
+      const price = parseFloat(data.pairs[0].priceUsd || 0);
+      if (typeof TOKENS !== 'undefined' && TOKENS[0]) {
+        TOKENS[0].price = price;
+        if (typeof buildTokenGrid === 'function') buildTokenGrid();
+      }
+    }
+  } catch (e) {
+    console.log("Gerçek veri alınamadı:", e);
+  }
+}
+</script>
+</body>
+</html>
 
   setInterval(updateListeners, 6000);
   setInterval(cycleMood, 15000);
